@@ -1,7 +1,24 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 
-# Create your models here.
+
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+                raise ValueError("Email is required")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+    
+    def  create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(email, password, **extra_fields)
+
+
+
 class User(AbstractUser):
 
     GENDER_CHOICES = [
@@ -14,20 +31,19 @@ class User(AbstractUser):
         DOCTOR  = "doctor",  "Doctor"
         PATIENT = "patient", "Patient"
 
+    objects = UserManager()
+
     username = None
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=Role.choices)
-    sex = models.CharField(max_length=10 ,choices=GENDER_CHOICES)
-    age = models.PositiveIntegerField()
+    sex = models.CharField(max_length=10 ,choices=GENDER_CHOICES, blank=True)
+    age = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name', 'role']
 
 
-    def __str__(self):
-        return f"Patient: {self.get_email_field_name()}"
-    
     @property
     def is_doctor(self):
         return self.role == self.Role.DOCTOR
@@ -35,6 +51,9 @@ class User(AbstractUser):
     @property
     def is_patient(self):
         return self.role == self.Role.PATIENT
+    
+    def __str__(self):
+        return f"{self.role}: {self.email}"
 
 class PatientProfile(models.Model):
 
@@ -55,6 +74,9 @@ class PatientProfile(models.Model):
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES)
     allergies = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        return f"Patient: {self.user.email}"
+
 
 class Department(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -74,4 +96,4 @@ class DoctorProfile(models.Model):
     slot_duration = models.PositiveIntegerField()
 
     def __str__(self):
-        return f"Dr. {self.get_full_name() - {self.department}}"
+        return f"Dr. {self.user.get_full_name()} - {self.department}"
