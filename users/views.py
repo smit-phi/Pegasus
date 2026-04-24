@@ -1,10 +1,84 @@
 from django.shortcuts import render
-from rest_framework import generics 
-from .models import User
-from .serializers import UserRegistrationSerializer
+from rest_framework import generics
+from rest_framework.exceptions import NotFound
+from rest_framework.permissions import IsAuthenticated
+from .models import User, Department, PatientProfile, DoctorProfile
+from .serializers import (
+    UserRegistrationSerializer,
+    DepartmentSerializer,
+    DoctorProfileUpdateSerializer,
+    PatientProfileUpdateSerializer,
+    DoctorListSerializer,
+)
+
 # Create your views here.
+
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
 
+
+class GetDepartmentsView(generics.ListAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+
+
+class MeView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+
+    http_method_names = ["get", "patch"]
+
+
+
+    def get_object(self):
+
+        user = self.request.user
+
+        if user.role == "patient":
+            try:
+                return PatientProfile.objects.select_related("user").get(user=user)
+            except PatientProfile.DoesNotExist:
+                raise NotFound("Patient does not exist.")
+
+        elif user.role == "doctor":
+            try:
+                return DoctorProfile.objects.select_related("user", "department").get(
+                    user=user
+                )
+            except DoctorProfile.DoesNotExist:
+                raise NotFound("Doctor does not exist.")
+
+        else:
+            raise NotFound("Profile not avaliable for Admin")
+
+    def get_serializer_class(self):
+
+        user = self.request.user
+
+        if user.role == "patient":
+            return PatientProfileUpdateSerializer
+        elif user.role == "doctor":
+            return DoctorProfileUpdateSerializer
+        else:
+            raise NotFound("Profile not avaliable for Admin")
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method == "PATCH":
+            kwargs["partial"] = True
+        return super().get_serializer(*args, **kwargs)
+
+
+class DoctorView(generics.ListAPIView):
+
+    serializer_class = DoctorListSerializer
+
+    def get_queryset(self):
+        department = self.request.query_params.get("department")
+        return DoctorProfile.objects.filter(department=department)
+
+
+class DoctorDetailView(generics.RetrieveAPIView):
+
+    queryset = DoctorProfile.objects.all()
+    serializer_class = DoctorListSerializer

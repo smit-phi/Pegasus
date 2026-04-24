@@ -55,6 +55,7 @@ class Slots(models.Model):
     class Meta:
         unique_together = ("doctor", "date", "start_time")
         ordering = ["date", "start_time"]
+        verbose_name_plural = "Slots"
 
 
     def clean(self):
