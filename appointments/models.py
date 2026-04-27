@@ -36,34 +36,34 @@ class Appointment(models.Model):
         
         if is_new:
             self.slot.is_booked = True
-            self.slot.save(update_fields="is_booked")
+            self.slot.save(update_fields=["is_booked"])
 
 
     def approve(self):
         self.status = self.Status.APPROVED
-        self.save(updated_fields=["status", "updated_at"])
+        self.save(update_fields=["status", "updated_at"])
 
     
     def reject(self, note: str = ""):
         self.status = self.Status.REJECTED
         self.rejection_note = note
-        self.save(updated_fields=["status", "updated_at", "rejection_note"])
+        self.save(update_fields=["status", "updated_at", "rejection_note"])
 
         self.slot.is_booked = False
-        self.slot.save(updated_fields=["is_booked"])
+        self.slot.save(update_fields=["is_booked"])
 
 
     def cancel(self):
         self.status = self.Status.CANCELLED
-        self.save(updated_fields=["status", "updated_at"])
+        self.save(update_fields=["status", "updated_at"])
 
         self.slot.is_booked = False
-        self.slot.save(updated_fields=["is_booked"])
+        self.slot.save(update_fields=["is_booked"])
 
     
     def complete(self):
         self.status = self.Status.COMPLETED
-        self.save(updated_fields=["status", "updated_at"])
+        self.save(update_fields=["status", "updated_at"])
 
 
     def __str__(self):

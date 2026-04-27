@@ -66,12 +66,11 @@ class GenerateSlotsView(APIView):
 
         return Response(
             {
-                {
                 "message": "Slot generation complete.",
                 "created": created,
                 "days_ahead": days_ahead,
-                }
-            },
+            }
+            ,
             status=status.HTTP_200_OK,
         )
     

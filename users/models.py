@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from rest_framework.exceptions import ValidationError
 
 
 class UserManager(BaseUserManager):
@@ -94,6 +95,11 @@ class DoctorProfile(models.Model):
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL, related_name="doctors")
     degree = models.CharField(max_length=50, blank=True)
     slot_duration = models.PositiveIntegerField()
+
+
+    def clean(self):
+        if self.user.role != "doctor":
+            raise ValidationError("user must be with doctor role")
 
     def __str__(self):
         return f"Dr. {self.user.get_full_name()} - {self.department}"
