@@ -1,13 +1,3 @@
-# from django.contrib import admin
-# from .models import User, DoctorProfile, Department, PatientProfile
-
-# # Register your models here.
-
-# admin.site.register(User)
-# admin.site.register(DoctorProfile)
-# admin.site.register(Department)
-# admin.site.register(PatientProfile)
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -85,6 +75,6 @@ class PatientProfileAdmin(admin.ModelAdmin):
 
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):
-    list_display  = ["user", "department", "slot_duration"]
+    list_display  = ["user", "department", "specialty", "slot_duration"]
     search_fields = ["user__email", "user__first_name"]
     list_filter   = ["department"]
