@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import environ
+import os
+
+env = environ.Env()
+environ.Env.read_env()
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -141,7 +146,25 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=200),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+CELERY_BROKER_URL          = env("REDIS_URL")
+CELERY_RESULT_BACKEND      = env("REDIS_URL")
+CELERY_TASK_SERIALIZER     = "json"
+CELERY_RESULT_SERIALIZER   = "json"
+CELERY_ACCEPT_CONTENT      = ["json"]
+CELERY_TIMEZONE            = "UTC"
+CELERY_TASK_TRACK_STARTED  = True
+
+
+
+EMAIL_BACKEND       = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST          = env("EMAIL_HOST",    default="smtp.gmail.com")
+EMAIL_PORT          = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS       = True
+EMAIL_HOST_USER     = env("EMAIL_HOST_USER",     default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL",  default="dhruv.simformsolutions@gmail.com")

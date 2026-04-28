@@ -6,30 +6,29 @@ from rest_framework.exceptions import ValidationError
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-                raise ValueError("Email is required")
+            raise ValueError("Email is required")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
-    
-    def  create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        return self.create_user(email, password, **extra_fields)
 
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        return self.create_user(email, password, **extra_fields)
 
 
 class User(AbstractUser):
 
     GENDER_CHOICES = [
-        ('Male', 'Male'), 
-        ('Female', 'Female'), 
+        ("Male", "Male"),
+        ("Female", "Female"),
     ]
 
     class Role(models.TextChoices):
-        ADMIN   = "admin",   "Admin"
-        DOCTOR  = "doctor",  "Doctor"
+        ADMIN = "admin", "Admin"
+        DOCTOR = "doctor", "Doctor"
         PATIENT = "patient", "Patient"
 
     objects = UserManager()
@@ -37,24 +36,24 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=Role.choices)
-    sex = models.CharField(max_length=10 ,choices=GENDER_CHOICES, blank=True)
+    sex = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'role']
-
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name", "role"]
 
     @property
     def is_doctor(self):
         return self.role == self.Role.DOCTOR
-    
+
     @property
     def is_patient(self):
         return self.role == self.Role.PATIENT
-    
+
     def __str__(self):
         return f"{self.role}: {self.email}"
+
 
 class PatientProfile(models.Model):
 
@@ -69,7 +68,9 @@ class PatientProfile(models.Model):
         ("O-", "O-"),
     ]
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="patient_profile")
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="patient_profile"
+    )
     weight = models.FloatField(blank=True, null=True)
     is_insured = models.BooleanField(default=False)
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES)
@@ -91,11 +92,14 @@ class Department(models.Model):
 
 
 class DoctorProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="doctor_profile")
-    department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL, related_name="doctors")
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="doctor_profile"
+    )
+    department = models.ForeignKey(
+        Department, null=True, on_delete=models.SET_NULL, related_name="doctors"
+    )
     degree = models.CharField(max_length=50, blank=True)
     slot_duration = models.PositiveIntegerField()
-
 
     def clean(self):
         if self.user.role != "doctor":

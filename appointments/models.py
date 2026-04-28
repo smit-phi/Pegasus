@@ -38,10 +38,16 @@ class Appointment(models.Model):
             self.slot.is_booked = True
             self.slot.save(update_fields=["is_booked"])
 
+            from .tasks import send_booking_confirmation_email
+            send_booking_confirmation_email.delay(self.id)
+
 
     def approve(self):
         self.status = self.Status.APPROVED
         self.save(update_fields=["status", "updated_at"])
+
+        from .tasks import send_appointment_approved_email
+        send_appointment_approved_email.delay(self.id)
 
     
     def reject(self, note: str = ""):
@@ -51,6 +57,9 @@ class Appointment(models.Model):
 
         self.slot.is_booked = False
         self.slot.save(update_fields=["is_booked"])
+
+        from .tasks import send_appointment_rejected_email
+        send_appointment_rejected_email.delay(self.id)
 
 
     def cancel(self):

@@ -1,22 +1,27 @@
 from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import User, Department, PatientProfile, DoctorProfile
 from .serializers import (
-    UserRegistrationSerializer,
+    # UserRegistrationSerializer,
     DepartmentSerializer,
     DoctorProfileUpdateSerializer,
     PatientProfileUpdateSerializer,
     DoctorListSerializer,
+    DoctorCreateSerializer,
+    DoctorAppointmentCountSerializer,
+    PatientRegisterSerializer
 )
+from rest_framework.views import APIView
+from django.db.models import Count
+from .permissions import IsAdmin
+from rest_framework.response import Response
 
-# Create your views here.
 
-
-class UserRegistrationView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserRegistrationSerializer
+# class UserRegistrationView(generics.CreateAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserRegistrationSerializer
 
 
 class GetDepartmentsView(generics.ListAPIView):
@@ -28,8 +33,6 @@ class MeView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     http_method_names = ["get", "patch"]
-
-
 
     def get_object(self):
 
@@ -82,3 +85,45 @@ class DoctorDetailView(generics.RetrieveAPIView):
 
     queryset = DoctorProfile.objects.all()
     serializer_class = DoctorListSerializer
+
+
+class DoctorCreateView(generics.CreateAPIView):
+
+    queryset = User.objects.all()
+    serializer_class = DoctorCreateSerializer
+    permission_classes = [IsAdmin]
+
+
+class DepartmentListCreateView(generics.ListCreateAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAdmin]
+
+
+class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAdmin]
+
+
+class DoctorCountView(APIView):
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+
+        doctors = DoctorProfile.objects.annotate(
+            total_appointments=Count("slots__appointment")
+        ).order_by("-total_appointments")
+
+        serializer = DoctorAppointmentCountSerializer(doctors, many=True)
+        return Response(serializer.data)
+
+
+class PatientCreateView(generics.CreateAPIView):
+
+    queryset = User.objects.all()
+    serializer_class = PatientRegisterSerializer
+    permission_classes = [AllowAny]
+
+

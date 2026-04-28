@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import User, PatientProfile, DoctorProfile, Department
 from django.contrib.auth import authenticate
+from django.db import transaction
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -62,6 +63,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = ["id", "name", "description"]
+        read_only_fields = ["id"]
 
 
 class UserNestedSerializer(serializers.ModelSerializer):
@@ -149,17 +151,169 @@ class DoctorProfileUpdateSerializer(serializers.ModelSerializer):
 
 class DoctorListSerializer(serializers.ModelSerializer):
 
-    email = serializers.EmailField(source='user.email', read_only=True)
-    department_name = serializers.CharField(source='department.name', read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    department_name = serializers.CharField(source="department.name", read_only=True)
 
     full_name = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = DoctorProfile
         fields = ["full_name", "email", "department_name", "degree", "slot_duration"]
-        read_only_fields = ["full_name", "email", "department_name", "degree", "slot_duration"]
+        read_only_fields = [
+            "full_name",
+            "email",
+            "department_name",
+            "degree",
+            "slot_duration",
+        ]
 
     def get_full_name(self, obj):
         return obj.user.get_full_name()
-    
 
+
+class DoctorCreateSerializer(serializers.ModelSerializer):
+
+    department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all())
+    degree = serializers.CharField(required=False, allow_blank=True, default="")
+    slot_duration = serializers.IntegerField(min_value=5, max_value=120)
+
+    password = serializers.CharField(write_only=True, min_length=8)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "password",
+            "first_name",
+            "last_name",
+            "age",
+            "sex",
+            "department",
+            "degree",
+            "slot_duration",
+        ]
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def validate_slot_duration(self, value):
+        allowed = [10, 15, 20, 30, 45, 60, 90, 120]
+        if value not in allowed:
+            raise serializers.ValidationError(
+                f"Slot duration must be one of: {allowed} minutes."
+            )
+        return value
+
+    def create(self, validated_data):
+        profile_data = {
+            "department": validated_data.pop("department"),
+            "degree": validated_data.pop("degree", ""),
+            "slot_duration": validated_data.pop("slot_duration"),
+        }
+
+        password = validated_data.pop("password")
+
+        with transaction.atomic():
+            user = User.objects.create(
+                **validated_data, password=password, role=User.Role.DOCTOR
+            )
+
+            DoctorProfile.objects.create(user=user, **profile_data)
+
+        return user
+
+    # just to see for admin whaat was created.
+    def to_representation(self, instance):
+        return {
+            "id": instance.id,
+            "email": instance.email,
+            "full_name": instance.get_full_name(),
+            "role": instance.role,
+            "department": (
+                instance.doctor_profile.department.name
+                if instance.doctor_profile.department
+                else None
+            ),
+            "specialty": instance.doctor_profile.specialty,
+            "degree": instance.doctor_profile.degree,
+        }
+
+
+class DoctorAppointmentCountSerializer(serializers.ModelSerializer):
+
+    total_appointments = serializers.IntegerField(read_only=True)
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DoctorProfile
+        fields = ["id", "full_name", "total_appointments"]
+
+    def get_full_name(self, obj):
+        return obj.user.get_full_name()
+
+
+class PatientRegisterSerializer(serializers.ModelSerializer):
+
+    weight = serializers.FloatField(required=False, allow_null=True)
+    is_insured = serializers.BooleanField(required=False, default=False)
+    blood_group = serializers.ChoiceField(
+        choices=PatientProfile.BLOOD_GROUP_CHOICES,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    allergies = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+    password = serializers.CharField(write_only=True, min_length=8)
+
+    class Meta:
+        model = User
+        fields = [
+            # User fields
+            "email",
+            "password",
+            "first_name",
+            "last_name",
+            "sex",
+            "age",
+            # PatientProfile fields declared above
+            "weight",
+            "is_insured",
+            "blood_group",
+            "allergies",
+        ]
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def validate_slot_duration(self, value):
+        allowed = [10, 15, 20, 30, 45, 60, 90, 120]
+        if value not in allowed:
+            raise serializers.ValidationError(
+                f"Slot duration must be one of: {allowed} minutes."
+            )
+        return value
+
+    def create(self, validated_data):
+        profile_data = {
+            "weight": validated_data.pop("weight", None),
+            "is_insured": validated_data.pop("is_insured", False),
+            "blood_group": validated_data.pop("blood_group", None),
+            "allergies": validated_data.pop("allergies", None)
+        }
+
+        password = validated_data.pop("password")
+
+        with transaction.atomic():
+            user = User.objects.create(
+                **validated_data, password=password, role=User.Role.PATIENT
+            )
+
+            DoctorProfile.objects.create(user=user, **profile_data)
+
+        return user
