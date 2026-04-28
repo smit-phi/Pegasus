@@ -27,3 +27,9 @@ class IsAppointedDocter(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.slot.doctor.user == request.user
+    
+
+class IsOwnerPatient(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return obj.patient.user == request.user
