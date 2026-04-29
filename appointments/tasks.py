@@ -69,7 +69,7 @@ Details:
 
 You will receive another email once the doctor confirms your appointment.
 
-— Hospital Management System
+— Pegasus - Hospital Management System
 """
         send_mail(
             subject=subject,

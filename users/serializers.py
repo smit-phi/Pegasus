@@ -26,37 +26,37 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    patient_profile = PatientProfileSerializer(required=False)
-    doctor_profile = DoctorProfileSerializer(required=False)
-    password = serializers.CharField(write_only=True, min_length=6)
+# class UserRegistrationSerializer(serializers.ModelSerializer):
+#     patient_profile = PatientProfileSerializer(required=False)
+#     doctor_profile = DoctorProfileSerializer(required=False)
+#     password = serializers.CharField(write_only=True, min_length=6)
 
-    class Meta:
-        model = User
-        fields = [
-            "email",
-            "first_name",
-            "last_name",
-            "password",
-            "role",
-            "age",
-            "sex",
-            "patient_profile",
-            "doctor_profile",
-        ]
+#     class Meta:
+#         model = User
+#         fields = [
+#             "email",
+#             "first_name",
+#             "last_name",
+#             "password",
+#             "role",
+#             "age",
+#             "sex",
+#             "patient_profile",
+#             "doctor_profile",
+#         ]
 
-    def create(self, validated_data):
-        patient_data = validated_data.pop("patient_profile", None)
-        doctor_data = validated_data.pop("doctor_profile", None)
+#     def create(self, validated_data):
+#         patient_data = validated_data.pop("patient_profile", None)
+#         doctor_data = validated_data.pop("doctor_profile", None)
 
-        user = User.objects.create_user(**validated_data)
+#         user = User.objects.create_user(**validated_data)
 
-        if patient_data:
-            PatientProfile.objects.create(user=user, **patient_data)
-        if doctor_data:
-            DoctorProfile.objects.create(user=user, **doctor_data)
+#         if patient_data:
+#             PatientProfile.objects.create(user=user, **patient_data)
+#         if doctor_data:
+#             DoctorProfile.objects.create(user=user, **doctor_data)
 
-        return user
+#         return user
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -158,8 +158,9 @@ class DoctorListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DoctorProfile
-        fields = ["full_name", "email", "department_name", "degree", "slot_duration"]
+        fields = ["id", "full_name", "email", "department_name", "degree", "slot_duration"]
         read_only_fields = [
+            "id",
             "full_name",
             "email",
             "department_name",
@@ -218,8 +219,10 @@ class DoctorCreateSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             user = User.objects.create(
-                **validated_data, password=password, role=User.Role.DOCTOR
+                **validated_data, role=User.Role.DOCTOR
             )
+            user.set_password(password)
+            user.save()
 
             DoctorProfile.objects.create(user=user, **profile_data)
 
@@ -237,7 +240,6 @@ class DoctorCreateSerializer(serializers.ModelSerializer):
                 if instance.doctor_profile.department
                 else None
             ),
-            "specialty": instance.doctor_profile.specialty,
             "degree": instance.doctor_profile.degree,
         }
 
@@ -311,9 +313,11 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             user = User.objects.create(
-                **validated_data, password=password, role=User.Role.PATIENT
+                **validated_data, role=User.Role.PATIENT
             )
+            user.set_password(password)
+            user.save()
 
-            DoctorProfile.objects.create(user=user, **profile_data)
+            PatientProfile.objects.create(user=user, **profile_data)
 
         return user

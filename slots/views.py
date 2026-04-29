@@ -9,6 +9,7 @@ from .generator import generate_slots_for_doctor
 from users.permissions import IsDoctor, IsPatient
 from rest_framework.response import Response
 from rest_framework import status
+from . tasks import generate_slots_for_doctor_task
 
 # Create your views here.
 
@@ -20,15 +21,9 @@ class DoctorAvailabilityListCreateView(ListCreateAPIView):
     def get_queryset(self):
         # A doctor should only be able to see his own avaliability.
         return DoctorAvaliability.objects.filter(doctor=self.request.user.doctor_profile)
-    
+
     def perform_create(self, serializer):
-        # Why not let the client send doctor_id?
-        # Because then a malicious doctor could set doctor_id=someone_else
-        # and create availability entries for other doctors.
-        # Injecting from request.user makes it impossible to spoof.
-
-        serializer.save(doctor=self.request.user.doctor_profile)
-
+        serializer.save()
 
 class DoctorAvailabilityDetailView(RetrieveUpdateDestroyAPIView):
 
@@ -54,24 +49,23 @@ class GenerateSlotsView(APIView):
         except ValueError:
             raise ValidationError({"days_ahead": "Must be an integer."})
         
-        if days_ahead < 1 and days_ahead > 90:
+        if days_ahead < 1 or days_ahead > 90:
             raise ValidationError({"days_ahead": "Must be between 1 and 90."})
         
         before = Slots.objects.filter(doctor=doctor).count()
 
-        generate_slots_for_doctor(doctor, days_ahead=days_ahead)
+        generate_slots_for_doctor_task.delay(doctor.id, days_ahead=days_ahead)
 
         after = Slots.objects.filter(doctor=doctor).count()
         created = after - before
 
         return Response(
             {
-                "message": "Slot generation complete.",
-                "created": created,
+                "message": "Slot generation has started in bg.",
                 "days_ahead": days_ahead,
             }
             ,
-            status=status.HTTP_200_OK,
+            status=status.HTTP_202_ACCEPTED,
         )
     
 

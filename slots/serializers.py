@@ -2,6 +2,7 @@ from rest_framework import serializers
 from . models import DoctorAvaliability, Slots
 from users.models import DoctorProfile
 from datetime import date
+from rest_framework.validators import UniqueTogetherValidator
 
 class DoctorAvailabilitySerializer(serializers.ModelSerializer):
 
@@ -11,22 +12,33 @@ class DoctorAvailabilitySerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    is_active = serializers.BooleanField(default=True)
     class Meta:
         model = DoctorAvaliability
         fields = [
-            "id", "day_of_week", "day_display", "start_time", "end_time", "is_active"
+            "id", "doctor", "day_of_week", "day_display", "start_time", "end_time", "is_active"
         ]
         read_only_fields = ["id"]
 
+        validators = [
+            UniqueTogetherValidator(
+                queryset=DoctorAvaliability.objects.all(),
+                fields=['doctor', 'day_of_week'],
+                message="This doctor already has availability set for this day."
+            )
+        ]
+
     def validate(self, data):
-        
         start = data.get("start_time")
-        end   = data.get("end_time")
+        end = data.get("end_time")
 
         if start and end and end <= start:
             raise serializers.ValidationError(
                {"end_time": "end_time must be after start_time."}
             )
+        
+        # if isinstance(data.get('doctor'), type(self.context['request'].user)):
+        #     data['doctor'] = data['doctor'].doctor_profile
         
         # For PATCH, start or end might not be in data at all
         # because the client only sent one of them. In that case we fall back to

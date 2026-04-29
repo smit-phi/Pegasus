@@ -78,10 +78,9 @@ class AppointmentsHistory(ListAPIView):
     serializer_class = AppointmentDetailSerializer
 
     def get_queryset(self):
-
         return Appointment.objects.filter(
             slot__doctor=self.request.user.doctor_profile,
-            status=Appointment.Status.PENDING,
+            status__in=[Appointment.Status.PENDING, Appointment.Status.APPROVED],
         ).order_by("-created_at")
 
 

@@ -15,7 +15,7 @@ class Appointment(models.Model):
     slot = models.ForeignKey("slots.Slots", on_delete=models.CASCADE, related_name="appointment")
     status = models.CharField(choices=Status.choices, default=Status.PENDING)
     reason_for_visit = models.TextField(blank=True)
-    rejection_note = models.TextField(blank=True)
+    rejection_note = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
