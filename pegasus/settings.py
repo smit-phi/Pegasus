@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'appointments.apps.AppointmentsConfig',
     'users.apps.UsersConfig',
     'slots.apps.SlotsConfig',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -62,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'pegasus.urls'
@@ -163,7 +165,7 @@ CELERY_TASK_TRACK_STARTED  = True
 
 
 
-EMAIL_BACKEND       = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_BACKEND       = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST          = env("EMAIL_HOST",    default="smtp.gmail.com")
 EMAIL_PORT          = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS       = True
@@ -178,6 +180,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "http://0.0.0.0:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True
 DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL",  default="dhruv.simformsolutions@gmail.com")
+
+
+# for django toolbar.
+INTERNAL_IPS = [
+   '127.0.0.1',
+]

@@ -293,13 +293,6 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
-    def validate_slot_duration(self, value):
-        allowed = [10, 15, 20, 30, 45, 60, 90, 120]
-        if value not in allowed:
-            raise serializers.ValidationError(
-                f"Slot duration must be one of: {allowed} minutes."
-            )
-        return value
 
     def create(self, validated_data):
         profile_data = {
