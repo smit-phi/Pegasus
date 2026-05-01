@@ -42,7 +42,7 @@ class User(AbstractUser):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", "role"]
-
+    
     @property
     def is_doctor(self):
         return self.role == self.Role.DOCTOR

@@ -10,6 +10,7 @@ from users.permissions import IsDoctor, IsPatient
 from rest_framework.response import Response
 from rest_framework import status
 from . tasks import generate_slots_for_doctor_task
+from . pagination import StandardSlotResultsPagination
 
 # Create your views here.
 
@@ -85,7 +86,7 @@ class AvailableSlotsView(ListAPIView):
 
     serializer_class = SlotReadSerializer
     permission_classes = [IsPatient]
-
+    pagination_class = StandardSlotResultsPagination
 
     def get_queryset(self):
         doctor_id = self.request.query_params.get("doctor")
