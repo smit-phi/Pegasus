@@ -13,6 +13,8 @@ from users.permissions import (
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
+from datetime import date
+from rest_framework import status
 
 
 class AppointmentCreateView(CreateAPIView):
@@ -105,11 +107,22 @@ class CancelAppointment(APIView):
 
         self.check_object_permissions(request, appointment)
 
+        if appointment.slot.date < date.today():
+            return Response(
+                {"error": "cannot cancel a previous appointment."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        if appointment.status == Appointment.Status.PENDING or appointment.status == Appointment.Status.APPROVED:
+        if (
+            appointment.status == Appointment.Status.PENDING
+            or appointment.status == Appointment.Status.APPROVED
+        ):
             appointment.cancel()
             appointment.save()
             return Response({"status": appointment.status})
 
         else:
-            return Response({"error": "cannot cancel a canceled or compelted appointment."})
+            return Response(
+                {"error": "cannot cancel a canceled or compelted appointment."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

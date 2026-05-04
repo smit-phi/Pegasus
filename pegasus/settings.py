@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'slots.apps.SlotsConfig',
     'debug_toolbar',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -190,3 +191,5 @@ DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL",  default="dhruv.simformsolutions
 INTERNAL_IPS = [
    '127.0.0.1',
 ]
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
