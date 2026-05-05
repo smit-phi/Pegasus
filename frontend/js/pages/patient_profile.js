@@ -91,7 +91,7 @@ async function renderPatientProfile() {
                 msgEl.classList.remove("d-none");
             } catch (err) {
                 msgEl.className = "alert alert-danger";
-                msgEl.textContent = "Update failed: " + (err.data ? JSON.stringify(err.data) : err.message);
+                msgEl.textContent = "Update failed: " + formatApiError(err.data);
                 msgEl.classList.remove("d-none");
             }
         });

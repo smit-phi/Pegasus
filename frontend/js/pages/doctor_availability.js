@@ -82,7 +82,7 @@ async function renderDoctorAvailability() {
                     await api.updateAvailability(id, { is_active: !isActive });
                     renderDoctorAvailability();
                 } catch (err) {
-                    showAvailMsg("Failed to toggle: " + (err.data ? JSON.stringify(err.data) : err.message), "danger");
+                    showAvailMsg("Failed to toggle: " + formatApiError(err.data), "danger");
                 }
             });
         });
@@ -109,7 +109,7 @@ async function renderDoctorAvailability() {
                 genMsg.textContent = res.message || "Slots generation started!";
                 genMsg.className = "ms-2 text-success";
             } catch (err) {
-                genMsg.textContent = "Failed: " + (err.data ? JSON.stringify(err.data) : err.message);
+                genMsg.textContent = "Failed: " + formatApiError(err.data);
                 genMsg.className = "ms-2 text-danger";
             }
         });
@@ -127,7 +127,7 @@ async function renderDoctorAvailability() {
                 await api.createAvailability(body);
                 renderDoctorAvailability();
             } catch (err) {
-                showAvailMsg("Failed: " + (err.data ? JSON.stringify(err.data) : err.message), "danger");
+                showAvailMsg("Failed: " + formatApiError(err.data), "danger");
             }
         });
 

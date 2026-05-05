@@ -198,3 +198,44 @@ You can browse other available slots and request a new appointment.
 
     except Exception as exc:
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
+
+
+@shared_task
+def auto_update_past_appointments():
+    """
+    Nightly cleanup task (registered in celery beat_schedule).
+
+    1. approved  → completed  — the visit window has passed.
+    2. pending   → cancelled  — the doctor never responded in time.
+    3. Deactivate expired unbooked slots so patients can't see them.
+    """
+    from appointments.models import Appointment
+    from slots.models import Slots
+    from datetime import date
+
+    today = date.today()
+
+    # 1. Auto-complete approved appointments whose slot date is in the past
+    completed = Appointment.objects.filter(
+        status=Appointment.Status.APPROVED,
+        slot__date__lt=today,
+    ).update(status=Appointment.Status.COMPLETED)
+
+    # 2. Auto-cancel pending appointments whose slot date is in the past
+    cancelled = Appointment.objects.filter(
+        status=Appointment.Status.PENDING,
+        slot__date__lt=today,
+    ).update(status=Appointment.Status.CANCELLED)
+
+    # 3. Deactivate expired unbooked slots
+    expired_slots = Slots.objects.filter(
+        date__lt=today,
+        is_active=True,
+        is_booked=False,
+    ).update(is_active=False)
+
+    return {
+        "completed": completed,
+        "cancelled": cancelled,
+        "expired_slots": expired_slots,
+    }

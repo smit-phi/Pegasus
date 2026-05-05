@@ -13,9 +13,13 @@ app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
     "generate-slots-daily": {
-        "task":     "apps.slots.tasks.generate_slots_for_all_doctors_task",
+        "task":     "slots.tasks.generate_slots_for_all_doctor_task",
         "schedule": crontab(hour=0, minute=0),
         "kwargs":   {"days_ahead": 14},
+    },
+    "auto-update-past-appointments": {
+        "task":     "appointments.tasks.auto_update_past_appointments",
+        "schedule": crontab(hour=0, minute=15),
     },
 }
 

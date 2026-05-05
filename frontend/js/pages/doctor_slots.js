@@ -83,14 +83,8 @@ async function renderDoctorSlots(doctorId) {
                     formEl.classList.remove("d-none");
                 } catch (err) {
                     msgEl.className = "alert alert-danger";
-                    let msg = "Booking failed.";
-                    if (err.data) {
-                        if (typeof err.data === "string") msg = err.data;
-                        else if (err.data.non_field_errors) msg = err.data.non_field_errors.join(", ");
-                        else if (err.data.slot) msg = Array.isArray(err.data.slot) ? err.data.slot.join(", ") : err.data.slot;
-                        else msg = JSON.stringify(err.data);
-                    }
-                    msgEl.textContent = msg;
+                    msgEl.textContent = formatApiError(err.data, "Booking failed.");
+                    msgEl.style.whiteSpace = "pre-wrap";
                     msgEl.classList.remove("d-none");
                     btn.disabled = false;
                     btn.textContent = "Confirm";
@@ -101,7 +95,7 @@ async function renderDoctorSlots(doctorId) {
     } catch (err) {
         app.innerHTML = `
             <h4>Available Slots</h4>
-            <p class="text-danger">Failed to load slots. ${err.data ? JSON.stringify(err.data) : err.message}</p>
+            <p class="text-danger">Failed to load slots. ${formatApiError(err.data, err.message)}</p>
             <a href="#/browse-doctors" class="btn btn-outline-secondary btn-sm">Back to Doctors</a>
         `;
     }

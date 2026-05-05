@@ -124,3 +124,36 @@ const api = {
         return this.request("/appointments/history/", { auth: true });
     },
 };
+
+
+/**
+ * Convert a DRF error response body into a human-readable string.
+ * Handles:
+ *   - { detail: "..." }                       → "..."
+ *   - { non_field_errors: ["..."] }            → "..."
+ *   - { field: ["msg", ...], field2: ... }     → "field: msg\nfield2: msg"
+ *   - plain string                             → string
+ */
+function formatApiError(data, fallback = "Something went wrong.") {
+    if (!data) return fallback;
+    if (typeof data === "string") return data;
+    if (typeof data !== "object") return String(data);
+
+    // { detail: "..." }  — JWT / permission errors
+    if (data.detail) return data.detail;
+
+    // { non_field_errors: [...] }
+    if (data.non_field_errors) {
+        return Array.isArray(data.non_field_errors)
+            ? data.non_field_errors.join(", ")
+            : data.non_field_errors;
+    }
+
+    // Field-level: { email: ["A user with this email already exists."], ... }
+    return Object.entries(data)
+        .map(([key, val]) => {
+            const msg = Array.isArray(val) ? val.join(", ") : val;
+            return `${key}: ${msg}`;
+        })
+        .join("\n");
+}
