@@ -88,7 +88,7 @@ class PatientProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientProfile
         fields = ["id", "user", "weight", "is_insured", "blood_group", "allergies"]
-        read_only_field = ["id"]
+        read_only_fields = ["id"]
 
     def update(self, instance, validated_data):
 
@@ -105,12 +105,6 @@ class PatientProfileUpdateSerializer(serializers.ModelSerializer):
             user.save()
 
         return instance
-
-
-# class DoctorListSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = DoctorProfile
-#         fields = "__all__"
 
 
 class DepartmentNestedSerializer(serializers.Serializer):
@@ -228,7 +222,7 @@ class DoctorCreateSerializer(serializers.ModelSerializer):
 
         return user
 
-    # just to see for admin whaat was created.
+    # just to see for admin what was created.
     def to_representation(self, instance):
         return {
             "id": instance.id,
@@ -314,3 +308,18 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
             PatientProfile.objects.create(user=user, **profile_data)
 
         return user
+
+    def to_representation(self, instance):
+        profile = instance.patient_profile
+        return {
+            "id": instance.id,
+            "email": instance.email,
+            "full_name": instance.get_full_name(),
+            "role": instance.role,
+            "sex": instance.sex,
+            "age": instance.age,
+            "weight": profile.weight,
+            "blood_group": profile.blood_group,
+            "is_insured": profile.is_insured,
+            "allergies": profile.allergies,
+        }

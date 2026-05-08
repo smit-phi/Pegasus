@@ -37,9 +37,7 @@ class DoctorAvailabilitySerializer(serializers.ModelSerializer):
                {"end_time": "end_time must be after start_time."}
             )
         
-        # if isinstance(data.get('doctor'), type(self.context['request'].user)):
-        #     data['doctor'] = data['doctor'].doctor_profile
-        
+
         # For PATCH, start or end might not be in data at all
         # because the client only sent one of them. In that case we fall back to
         # the instance's existing values to still perform the check.

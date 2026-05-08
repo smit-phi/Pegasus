@@ -148,7 +148,16 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # 'DEFAULT_THROTTLE_CLASSES': [
+    #     'rest_framework.throttling.AnonRateThrottle',
+    #     'rest_framework.throttling.UserRateThrottle',
+    # ],
+    # 'DEFAULT_THROTTLE_RATES': {
+    #     'anon': '20/minute',     # unauthenticated: 20 requests/min
+    #     'user': '100/minute',    # authenticated: 100 requests/min
+    # },
 }
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=200),
@@ -182,6 +191,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
     "http://0.0.0.0:3000",
+    "http://127.0.0.1:4000"
 ]
 CORS_ALLOW_CREDENTIALS = True
 DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL",  default="dhruv.simformsolutions@gmail.com")

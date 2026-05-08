@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import User, Department, PatientProfile, DoctorProfile
 from .serializers import (
@@ -53,7 +53,7 @@ class MeView(generics.RetrieveUpdateAPIView):
                 raise NotFound("Doctor does not exist.")
 
         else:
-            raise NotFound("Profile not avaliable for Admin")
+            raise PermissionDenied("Profile not avaliable for Admin")
 
     def get_serializer_class(self):
 
@@ -77,9 +77,11 @@ class DoctorView(generics.ListAPIView):
     serializer_class = DoctorListSerializer
 
     def get_queryset(self):
+        qs = DoctorProfile.objects.select_related("user", "department")
         department = self.request.query_params.get("department")
-        return DoctorProfile.objects.filter(department=department)
-
+        if department:
+            qs = qs.filter(department=department)
+        return qs
 
 class DoctorDetailView(generics.RetrieveAPIView):
 
